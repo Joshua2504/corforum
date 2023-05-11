@@ -1,0 +1,32 @@
+####
+## Author:    Joshua Tobias Treudler
+## Created:   10.05.2023
+##
+## (c) Joshua Tobias Treudler
+####
+
+FROM php:7.2.34-apache
+
+ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+
+RUN chmod +x /usr/local/bin/install-php-extensions && \
+    install-php-extensions ctype dom exif json hash libxml \
+    mbstring pcre pdo pdo_mysql zlib gd imagick mysqli
+    
+
+### FOR REFERENCE SEE
+### https://nelkinda.com/blog/apache-php-in-docker/#d11e196
+SHELL ["/bin/bash", "-c"]
+RUN ln -s ../mods-available/{expires,headers,rewrite}.load /etc/apache2/mods-enabled/ && \
+    sed -e '/<Directory \/var\/www\/>/,/<\/Directory>/s/AllowOverride None/AllowOverride All/' -i /etc/apache2/apache2.conf
+# COPY php.ini /usr/local/etc/php/
+###
+
+COPY cron-00 /etc/cron.d/cron-00
+RUN apt-get update && \
+    apt-get -y install cron nano curl && \
+    chmod 0644 /etc/cron.d/cron-00 && \
+    crontab /etc/cron.d/cron-00 && \
+    touch /var/log/cron.log
+
+RUN sed -i 's/^exec /service cron start\n\nexec /' /usr/local/bin/apache2-foreground

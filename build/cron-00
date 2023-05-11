@@ -1,0 +1,1 @@
+0 10 * * * root curl https://cor-forum.de/regnum/rankingarchive/put_ra.php 2>&1

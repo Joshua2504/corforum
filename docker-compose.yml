@@ -1,0 +1,145 @@
+version: "3.5"
+
+services:
+
+    corforum-phpmyadmin:
+      image: phpmyadmin
+      restart: always
+      ports:
+        - 22090:80
+      environment:
+#        - PMA_ARBITRARY=1
+        - PMA_HOSTS=corforum-mariadb,corforum-mariadb-old,corforum-mariadb-ranking-valhalla,corforum-mariadb-ranking-ra,corforum-mariadb-mediawiki
+      links:
+            - "corforum-mariadb"
+            - "corforum-mariadb-old"
+            - "corforum-mariadb-ranking-valhalla"
+            - "corforum-mariadb-ranking-ra"
+            - "corforum-mariadb-mediawiki"
+
+    corforum-httpd:
+        container_name: corforum-httpd
+        build:
+            context: ./build
+            dockerfile: Dockerfile
+        ports:
+            - "22091:80"
+        restart: always
+        volumes:
+            - ./data/web/corforum:/var/www/html
+            - ../logs/corforum-httpd/apache2:/var/log/apache2 # webserver logs will be saved in this directory
+            - ../logs/corforum-httpd/cron:/var/log/cron
+            - ../logs/corforum-httpd/matomo:/var/log/matomo
+        depends_on:
+            - corforum-mariadb
+            - corforum-mariadb-ranking-valhalla
+            - corforum-mariadb-ranking-ra
+        links:
+            - "corforum-mariadb:mariadb"
+            - "corforum-mariadb-ranking-valhalla"
+            - "corforum-mariadb-ranking-ra"
+
+ #   corforum-httpd-old:
+ #       container_name: corforum-httpd-old
+ #       build:
+ #           context: ./build
+ #           dockerfile: Dockerfile_old
+ #       ports:
+ #           - "22092:80"
+ #       restart: always
+ #       volumes:
+ #           - ./data/web/corforum-old:/var/www/html
+ #           - ../logs/corforum-old/apache2:/var/log/apache2 # webserver logs wi>
+ #           - ../logs/corforum-old-httpd/cron:/var/log/cron
+ #           - ../logs/corforum-old-httpd/matomo:/var/log/matomo
+ #       depends_on:
+ #           - corforum-mariadb-old
+ #           - corforum-mariadb-ranking-valhalla
+ #           - corforum-mariadb-ranking-ra
+ #       links:
+ #           - "corforum-mariadb-old:mariadb"
+ #           - "corforum-mariadb-ranking-valhalla"
+ #           - "corforum-mariadb-ranking-ra"
+
+    corforum-httpd-usercontent:
+        container_name: corforum-httpd-usercontent
+        build:
+            context: ./build
+            dockerfile: Dockerfile
+        ports:
+            - "22093:80"
+        restart: always
+        volumes:
+            - ./data/web/usercontent:/var/www/html
+            - ../logs/corforum-usercontent-httpd/apache2:/var/log/apache2 # webserver logs will be saved in th>
+            - ../logs/corforum-usercontent-httpd/cron:/var/log/cron
+            - ../logs/corforum-usercontent-httpd/matomo:/var/log/matomo
+
+    corforum-httpd-maps:
+        container_name: corforum-httpd-maps
+        build:
+            context: ./build
+            dockerfile: Dockerfile
+        ports:
+            - "22094:80"
+        restart: always
+        volumes:
+            - ./data/web/maps:/var/www/html
+            - ../logs/corforum-maps-httpd/apache2:/var/log/apache2 # webserver logs will be saved>
+            - ../logs/corforum-maps-httpd/cron:/var/log/cron
+            - ../logs/corforum-maps-httpd/matomo:/var/log/matomo
+
+    corforum-mariadb:
+        container_name: corforum-mariadb
+        image: mariadb:latest
+        restart: always
+        volumes:
+            - ./data/mariadb/corforum:/var/lib/mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: ${CORFORUM_MYSQL_ROOT_PASSWORD}
+            MYSQL_DATABASE: ${CORFORUM_MYSQL_DATABASE}
+            MARIADB_AUTO_UPGRADE: "1"
+#            MARIADB_INITDB_SKIP_TZINFO: "1"
+
+
+    corforum-mariadb-old:
+        container_name: corforum-mariadb-old
+        image: mariadb:latest
+        restart: always
+        volumes:
+            - ./data/mariadb/corforum-old:/var/lib/mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: ${CORFORUM_OLD_MYSQL_ROOT_PASSWORD}
+            MYSQL_DATABASE: ${CORFORUM_OLD_MYSQL_DATABASE}
+
+    corforum-mariadb-ranking-valhalla:
+        container_name: corforum-mariadb-ranking-valhalla
+        image: mariadb:latest
+        restart: always
+        volumes:
+            - ./data/mariadb/ranking-valhalla:/var/lib/mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: ${RANKING_VALHALLA_MYSQL_ROOT_PASSWORD}
+            MYSQL_DATABASE: ${RANKING_VALHALLA_MYSQL_DATABASE}
+
+    corforum-mariadb-ranking-ra:
+        container_name: corforum-mariadb-ranking-ra
+        image: mariadb:latest
+        restart: always
+        volumes:
+            - ./data/mariadb/ranking-ra:/var/lib/mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: ${RANKING_RA_MYSQL_ROOT_PASSWORD}
+            MYSQL_DATABASE: ${RANKING_RA_MYSQL_DATABASE}
+
+    corforum-mariadb-mediawiki:
+        container_name: corforum-mariadb-mediawiki
+        image: mariadb:latest
+        restart: always
+        volumes:
+            - ./data/mariadb/mediawiki:/var/lib/mysql
+        environment:
+            MYSQL_DATABASE: ${MEDIAWIKI_MYSQL_DATABASE}
+            MYSQL_USER: ${MEDIAWIKI_MYSQL_USER}
+            MYSQL_PASSWORD: ${MEDIAWIKI_MYSQL_PASSWORD}
+            MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
