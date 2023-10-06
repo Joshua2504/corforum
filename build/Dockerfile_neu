@@ -13,12 +13,15 @@ RUN chmod +x /usr/local/bin/install-php-extensions && \
     install-php-extensions ctype dom exif json hash libxml \
     mbstring pcre pdo pdo_mysql zlib gd imagick mysqli
     
+
 ### FOR REFERENCE SEE
 ### https://nelkinda.com/blog/apache-php-in-docker/#d11e196
-#SHELL ["/bin/bash", "-c"]
-
-RUN ln -s ../mods-available/{expires,headers,rewrite}.load /etc/apache2/mods-enabled/ && \
-    sed -e '/<Directory \/var\/www\/>/,/<\/Directory>/s/AllowOverride None/AllowOverride All/' -i /etc/apache2/apache2.conf
+SHELL ["/bin/bash", "-c"]
+RUN ln -s ../mods-available/expires.load /etc/apache2/mods-enabled/ && \ 
+    ln -s ../mods-available/headers.load /etc/apache2/mods-enabled/ && \
+    ln -s ../mods-available/rewrite.load /etc/apache2/mods-enabled/ 
+RUN    sed '/<Directory \/var\/www\/>/,/<\/Directory>/s/AllowOverride None/AllowOverride All/' -i /etc/apache2/apache2.conf
+RUN    sed -i 's/upload_max_filesize = 20M/upload_max_filesize = 128M/g' /usr/local/etc/php/php.ini && \
 # COPY php.ini /usr/local/etc/php/
 ###
 

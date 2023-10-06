@@ -1,145 +1,109 @@
 version: "3.5"
 
 services:
-
-    corforum-phpmyadmin:
-      image: phpmyadmin
-      restart: always
+  corforum-httpd:
+      container_name: corforum-httpd
+      build:
+          context: ./build
+          dockerfile: Dockerfile_debug
       ports:
-        - 22090:80
-      environment:
-#        - PMA_ARBITRARY=1
-        - PMA_HOSTS=corforum-mariadb,corforum-mariadb-old,corforum-mariadb-ranking-valhalla,corforum-mariadb-ranking-ra,corforum-mariadb-mediawiki
-      links:
-            - "corforum-mariadb"
-            - "corforum-mariadb-old"
-            - "corforum-mariadb-ranking-valhalla"
-            - "corforum-mariadb-ranking-ra"
-            - "corforum-mariadb-mediawiki"
+          - "22091:80"
+      restart: always
+      volumes:
+          - ./data/web/corforum:/var/www/html
+          - ../logs/corforum-httpd/apache2:/var/log/apache2 # webserver logs will be saved in this directory
+          - ../logs/corforum-httpd/cron:/var/log/cron
 
-    corforum-httpd:
-        container_name: corforum-httpd
-        build:
-            context: ./build
-            dockerfile: Dockerfile
-        ports:
-            - "22091:80"
-        restart: always
-        volumes:
-            - ./data/web/corforum:/var/www/html
-            - ../logs/corforum-httpd/apache2:/var/log/apache2 # webserver logs will be saved in this directory
-            - ../logs/corforum-httpd/cron:/var/log/cron
-            - ../logs/corforum-httpd/matomo:/var/log/matomo
-        depends_on:
-            - corforum-mariadb
-            - corforum-mariadb-ranking-valhalla
-            - corforum-mariadb-ranking-ra
-        links:
-            - "corforum-mariadb:mariadb"
-            - "corforum-mariadb-ranking-valhalla"
-            - "corforum-mariadb-ranking-ra"
+#  corforum-httpd-old:
+#      container_name: corforum-httpd-old
+#      build:
+#          context: ./build
+#          dockerfile: Dockerfile_old
+#      ports:
+#          - "22092:80"
+#      restart: always
+#      volumes:
+#          - ./data/web/corforum-old:/var/www/html
+#          - ../logs/corforum-old/apache2:/var/log/apache2 # webserver logs wi>
+#          - ../logs/corforum-old-httpd/cron:/var/log/cron
 
- #   corforum-httpd-old:
- #       container_name: corforum-httpd-old
- #       build:
- #           context: ./build
- #           dockerfile: Dockerfile_old
- #       ports:
- #           - "22092:80"
- #       restart: always
- #       volumes:
- #           - ./data/web/corforum-old:/var/www/html
- #           - ../logs/corforum-old/apache2:/var/log/apache2 # webserver logs wi>
- #           - ../logs/corforum-old-httpd/cron:/var/log/cron
- #           - ../logs/corforum-old-httpd/matomo:/var/log/matomo
- #       depends_on:
- #           - corforum-mariadb-old
- #           - corforum-mariadb-ranking-valhalla
- #           - corforum-mariadb-ranking-ra
- #       links:
- #           - "corforum-mariadb-old:mariadb"
- #           - "corforum-mariadb-ranking-valhalla"
- #           - "corforum-mariadb-ranking-ra"
+#  corforum-httpd-beta:
+#      container_name: corforum-httpd-beta
+#      build:
+#          context: ./build
+#          dockerfile: Dockerfile_beta
+#      ports:
+#          - "22095:80"
+#      restart: always
+#      volumes:
+#          - ./data/web/corforum-beta:/var/www/html
+#          - ../logs/corforum-beta/apache2:/var/log/apache2 # webserver logs wi>
+#          - ../logs/corforum-beta-httpd/cron:/var/log/cron
 
-    corforum-httpd-usercontent:
-        container_name: corforum-httpd-usercontent
-        build:
-            context: ./build
-            dockerfile: Dockerfile
-        ports:
-            - "22093:80"
-        restart: always
-        volumes:
-            - ./data/web/usercontent:/var/www/html
-            - ../logs/corforum-usercontent-httpd/apache2:/var/log/apache2 # webserver logs will be saved in th>
-            - ../logs/corforum-usercontent-httpd/cron:/var/log/cron
-            - ../logs/corforum-usercontent-httpd/matomo:/var/log/matomo
+  corforum-httpd-usercontent:
+      container_name: corforum-httpd-usercontent
+      build:
+          context: ./build
+          dockerfile: Dockerfile
+      ports:
+          - "22093:80"
+      restart: always
+      volumes:
+          - ./data/web/usercontent:/var/www/html
+          - ../logs/corforum-usercontent-httpd/apache2:/var/log/apache2 # webserver logs will be saved in th>
+          - ../logs/corforum-usercontent-httpd/cron:/var/log/cron
 
-    corforum-httpd-maps:
-        container_name: corforum-httpd-maps
-        build:
-            context: ./build
-            dockerfile: Dockerfile
-        ports:
-            - "22094:80"
-        restart: always
-        volumes:
-            - ./data/web/maps:/var/www/html
-            - ../logs/corforum-maps-httpd/apache2:/var/log/apache2 # webserver logs will be saved>
-            - ../logs/corforum-maps-httpd/cron:/var/log/cron
-            - ../logs/corforum-maps-httpd/matomo:/var/log/matomo
+  corforum-httpd-cdn:
+      container_name: corforum-httpd-cdn
+      build:
+          context: ./build
+          dockerfile: Dockerfile
+      ports:
+          - "22096:80"
+      restart: always
+      volumes:
+          - ./data/web/cdn:/var/www/html
+          - ../logs/corforum-cdn-httpd/apache2:/var/log/apache2 # webserver logs will be saved in th>
+          - ../logs/corforum-cdn-httpd/cron:/var/log/cron
 
-    corforum-mariadb:
-        container_name: corforum-mariadb
-        image: mariadb:latest
-        restart: always
-        volumes:
-            - ./data/mariadb/corforum:/var/lib/mysql
-        environment:
-            MYSQL_ROOT_PASSWORD: ${CORFORUM_MYSQL_ROOT_PASSWORD}
-            MYSQL_DATABASE: ${CORFORUM_MYSQL_DATABASE}
-            MARIADB_AUTO_UPGRADE: "1"
-#            MARIADB_INITDB_SKIP_TZINFO: "1"
+  corforum-httpd-maps:
+      container_name: corforum-httpd-maps
+      build:
+          context: ./build
+          dockerfile: Dockerfile
+      ports:
+          - "22094:80"
+      restart: always
+      volumes:
+          - ./data/web/maps:/var/www/html
+          - ../logs/corforum-maps-httpd/apache2:/var/log/apache2 # webserver logs will be saved>
+          - ../logs/corforum-maps-httpd/cron:/var/log/cron
 
-
-    corforum-mariadb-old:
-        container_name: corforum-mariadb-old
-        image: mariadb:latest
-        restart: always
-        volumes:
-            - ./data/mariadb/corforum-old:/var/lib/mysql
-        environment:
-            MYSQL_ROOT_PASSWORD: ${CORFORUM_OLD_MYSQL_ROOT_PASSWORD}
-            MYSQL_DATABASE: ${CORFORUM_OLD_MYSQL_DATABASE}
-
-    corforum-mariadb-ranking-valhalla:
-        container_name: corforum-mariadb-ranking-valhalla
-        image: mariadb:latest
-        restart: always
-        volumes:
-            - ./data/mariadb/ranking-valhalla:/var/lib/mysql
-        environment:
-            MYSQL_ROOT_PASSWORD: ${RANKING_VALHALLA_MYSQL_ROOT_PASSWORD}
-            MYSQL_DATABASE: ${RANKING_VALHALLA_MYSQL_DATABASE}
-
-    corforum-mariadb-ranking-ra:
-        container_name: corforum-mariadb-ranking-ra
-        image: mariadb:latest
-        restart: always
-        volumes:
-            - ./data/mariadb/ranking-ra:/var/lib/mysql
-        environment:
-            MYSQL_ROOT_PASSWORD: ${RANKING_RA_MYSQL_ROOT_PASSWORD}
-            MYSQL_DATABASE: ${RANKING_RA_MYSQL_DATABASE}
-
-    corforum-mariadb-mediawiki:
-        container_name: corforum-mariadb-mediawiki
-        image: mariadb:latest
-        restart: always
-        volumes:
-            - ./data/mariadb/mediawiki:/var/lib/mysql
-        environment:
-            MYSQL_DATABASE: ${MEDIAWIKI_MYSQL_DATABASE}
-            MYSQL_USER: ${MEDIAWIKI_MYSQL_USER}
-            MYSQL_PASSWORD: ${MEDIAWIKI_MYSQL_PASSWORD}
-            MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+  corforum-mediawiki:
+    container_name: corforum-mediawiki
+    image: mediawiki:latest
+    restart: always
+    ports:
+      - 22097:80
+    volumes:
+      - ./regnum-mediawiki/images:/var/www/html/images
+     # After initial setup, download LocalSettings.php to the same directory as
+     # this yaml and uncomment the following line and use compose to restart
+     # the mediawiki service
+      - ./regnum-mediawiki/LocalSettings.php:/var/www/html/LocalSettings.php
+      - ./regnum-mediawiki/ads.txt:/var/www/html/ads.txt
+      - ./regnum-mediawiki/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
+      - ./regnum-mediawiki/ext/MatomoAnalytics:/var/www/html/extensions/MatomoAnalytics
+      - ./regnum-mediawiki/ext/Babel:/var/www/html/extensions/Babel
+      - ./regnum-mediawiki/ext/cldr:/var/www/html/extensions/cldr
+      - ./regnum-mediawiki/ext/CleanChanges:/var/www/html/extensions/CleanChanges
+      - ./regnum-mediawiki/ext/DarkMode:/var/www/html/extensions/DarkMode
+      - ./regnum-mediawiki/ext/LocalisationUpdate:/var/www/html/extensions/LocalisationUpdate
+      - ./regnum-mediawiki/ext/Translate:/var/www/html/extensions/Translate
+      - ./regnum-mediawiki/ext/UniversalLanguageSelector:/var/www/html/extensions/UniversalLanguageSelector
+      - ./regnum-mediawiki/ext/SmiteSpam:/var/www/html/extensions/SmiteSpam
+      - ./regnum-mediawiki/ext/DeleteBatch:/var/www/html/extensions/DeleteBatch
+      - ./regnum-mediawiki/ext/GoogleAdSense:/var/www/html/extensions/GoogleAdSense
+      - ./regnum-mediawiki/ext/HeadScript:/var/www/html/extensions/HeadScript
+    environment:
+      MEDIAWIKI_MAX_UPLOAD_SIZE: "100M"
